@@ -175,4 +175,4 @@ class pinCodeChecker extends HTMLElement {
   }
 }
 
-customElements.define("pin-code-checker", pinCodeChecker);
+customElements.define("pincode-checker", pinCodeChecker);
