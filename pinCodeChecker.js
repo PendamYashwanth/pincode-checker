@@ -136,41 +136,57 @@ class pinCodeChecker extends HTMLElement {
         "content-type": "Application/json",
       },
     };
-    const response = await fetch(url, options);
-    if (response.ok === true) {
-      const fetchedData = await response.json();
-      console.log(fetchedData);
-      const data = fetchedData[0];
-      console.log(data);
-      const { Message, Status, PostOffice } = data;
-      if (Status === "Success") {
-        console.log(PostOffice);
-        let postOfficesList = [];
-        if (PostOffice.length > 0) {
-          for (let obj of PostOffice) {
-            postOfficesList.push(obj.Name);
+    try {
+      const response = await fetch(url, options);
+      if (response.ok === true) {
+        const fetchedData = await response.json();
+        const data = fetchedData[0];
+        const { Message, Status, PostOffice } = data;
+        if (Status === "Success") {
+          let postOfficesList = [];
+          let deliverablePostOfficesList = [];
+          if (PostOffice.length > 0) {
+            for (let obj of PostOffice) {
+              postOfficesList.push(obj.Name);
+              if (obj.DeliveryStatus === "Delivery") {
+                deliverablePostOfficesList.push(obj.Name);
+              }
+            }
+            const postOffices = postOfficesList.join(", ");
+            const deliverablePostOffices =
+              deliverablePostOfficesList.join(", ");
+            let results;
+            if (PostOffice.length === 1) {
+              results = `Post Office under pincode ${this.pincode} is`;
+            } else {
+              results = `Post Offices under pincode ${this.pincode} are`;
+            }
+
+            let deliveryResults;
+            if (deliverablePostOfficesList.length >= 1) {
+              deliveryResults = `Delivery available to ${deliverablePostOffices}.`;
+            } else {
+              deliveryResults = `Delivery available to None.`;
+            }
+
+            this.shadowRoot.getElementById(
+              "post-offices"
+            ).innerHTML = `${results} ${postOffices}. <br/> ${deliveryResults}`;
           }
-          const postOffices = postOfficesList.join(", ");
-          let results;
-          if (PostOffice.length === 1) {
-            results = `Post Office under pincode ${this.pincode} is`;
-          } else {
-            results = `Post Offices under pincode ${this.pincode} are`;
-          }
+          this.shadowRoot.getElementById("status").textContent = "";
+        } else {
           this.shadowRoot.getElementById(
-            "post-offices"
-          ).textContent = `${results} ${postOffices}.`;
+            "status"
+          ).textContent = `${Message} for this pincode: ${this.pincode}`;
         }
-        this.shadowRoot.getElementById("status").textContent = "";
       } else {
-        this.shadowRoot.getElementById(
-          "status"
-        ).textContent = `${Message} for this pincode: ${this.pincode}`;
+        const data = await response.json();
+        const { Message } = data[0];
+        this.shadowRoot.getElementById("status").textContent = Message;
       }
-    } else {
-      const data = await response.json();
-      const { Message } = data[0];
-      this.shadowRoot.getElementById("status").textContent = Message;
+    } catch (e) {
+      this.shadowRoot.getElementById("status").textContent =
+        "Oops! Something went wrong";
     }
   }
 }
